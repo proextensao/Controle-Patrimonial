@@ -6,6 +6,8 @@
 <title>Controle Patrimonial — Setor</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+ <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -650,25 +652,56 @@
 
 <script>
 // ─── Estado ───────────────────────────────────────────────────────────────────
-let DB = JSON.parse(localStorage.getItem('pat_db') || '[]');
-let CONF = JSON.parse(localStorage.getItem('pat_conf') || '[]');
-let ULTIMA = JSON.parse(localStorage.getItem('pat_ultima') || 'null');
-let lastQR = null;
-let scanner = null;
-let scannerOn = false;
-let activeFilter = 'Todos';
+const firebaseConfig = {
+  apiKey: "AIzaSyCc6IWFDmFY-Bx6dxvuZthbqln_alTxfNo",
+  authDomain: "controle-patrimonial-4384d.firebaseapp.com",
+  projectId: "controle-patrimonial-4384d",
+  storageBucket: "controle-patrimonial-4384d.firebasestorage.app",
+  messagingSenderId: "558235619278",
+  appId: "1:558235619278:web:7c3dbdfbb6fce9b73ee59f"
+};
 
+// Inicializa o Firebase
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
+const db = firebase.firestore();
+
+let DB = [];
+let CONF = [];
+let ULTIMA = null;
+
+// Escuta o banco de dados em tempo real
+db.collection("setor").doc("patrimonio").onSnapshot((doc) => {
+  if (doc.exists) {
+    const data = doc.data();
+    DB = data.db || [];
+    CONF = data.conf || [];
+    ULTIMA = data.ultima || null;
+    updateHeaderCount();
+
+    if (document.getElementById('page-materiais').classList.contains('active')) renderMateriais();
+    if (document.getElementById('page-conferencia').classList.contains('active')) renderConferencia();
+    if (document.getElementById('page-relatorio').classList.contains('active')) renderRelatorio();
+  }
+});
+
+// Salva na nuvem
 function saveDB() {
-  localStorage.setItem('pat_db', JSON.stringify(DB));
-  localStorage.setItem('pat_conf', JSON.stringify(CONF));
-  if (ULTIMA) localStorage.setItem('pat_ultima', JSON.stringify(ULTIMA));
+  db.collection("setor").doc("patrimonio").set({
+    db: DB,
+    conf: CONF,
+    ultima: ULTIMA
+  }).catch(error => {
+    console.error("Erro ao salvar:", error);
+    toast('Erro de conexão com o banco', 'err');
+  });
   updateHeaderCount();
 }
 
 function updateHeaderCount() {
   document.getElementById('header-count').textContent = DB.length + ' ' + (DB.length === 1 ? 'material' : 'materiais');
 }
-
 // ─── Toast ────────────────────────────────────────────────────────────────────
 function toast(msg, type = '') {
   const el = document.getElementById('toast');
