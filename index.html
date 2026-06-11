@@ -1097,13 +1097,15 @@ function finalizarConf() {
     conf: conf.length,
     pendentes: pend.map(m => ({ bmp: m.bmp, classe: m.classe, desc: m.desc }))
   };
-  localStorage.setItem('pat_ultima', JSON.stringify(ULTIMA));
+  
+  // Agora ele usa a função que salva no Firebase e não mais o localStorage!
+  saveDB(); 
+  
   toast(`Conferência finalizada: ${conf.length}/${DB.length} itens.`, 'ok');
   setTimeout(() => {
     document.querySelector('[onclick*="relatorio"]').click();
   }, 1000);
 }
-
 // ─── Relatório ────────────────────────────────────────────────────────────────
 function renderRelatorio() {
   const conf = CONF.filter(b => DB.find(m => m.bmp === b)).length;
