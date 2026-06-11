@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Controle Patrimonial — Setor</title>
-<script src="https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -736,18 +736,19 @@ function cadastrar() {
 
 function gerarQRPreview(item) {
   const panel = document.getElementById('qr-panel');
-  panel.innerHTML = '<div id="qr-render"></div>';
+  // Usamos uma tag <canvas> diretamente para o QRious
+  panel.innerHTML = '<canvas id="qr-render" style="border-radius: 6px;"></canvas>';
   
   const payload = `CLASSE:${item.classe}|BMP:${item.bmp}|DESC:${item.desc}`;
-  
-  // CORREÇÃO: Prepara a string para aceitar acentos e caracteres especiais
-  const payloadSafe = unescape(encodeURIComponent(payload));
 
-  new QRCode(document.getElementById('qr-render'), {
-    text: payloadSafe, // Use a variável corrigida aqui
-    width: 160, height: 160,
-    colorDark: '#1A1A18', colorLight: '#ffffff',
-    correctLevel: QRCode.CorrectLevel.H
+  // Novo gerador moderno
+  new QRious({
+    element: document.getElementById('qr-render'),
+    value: payload,
+    size: 160,
+    background: '#ffffff',
+    foreground: '#1A1A18',
+    level: 'H'
   });
   
   const info = document.createElement('div');
@@ -778,14 +779,18 @@ function buildPrintArea(items) {
   items.forEach(item => {
     const wrap = document.createElement('div');
     wrap.className = 'print-label';
-    const qDiv = document.createElement('div');
+    
+    // O QRious renderiza em um canvas
+    const qDiv = document.createElement('canvas');
     qDiv.style.flexShrink = '0';
-   new QRCode(qDiv, {
-  text: unescape(encodeURIComponent(`CLASSE:${item.classe}|BMP:${item.bmp}|DESC:${item.desc}`)),
-      width: 80, height: 80,
-      colorDark: '#000000', colorLight: '#ffffff',
-      correctLevel: QRCode.CorrectLevel.H
+    
+    new QRious({
+      element: qDiv,
+      value: `CLASSE:${item.classe}|BMP:${item.bmp}|DESC:${item.desc}`,
+      size: 80,
+      level: 'H'
     });
+
     const info = document.createElement('div');
     info.className = 'print-info';
     info.innerHTML = `<div class="pi-classe">Classe ${item.classe}</div>
@@ -881,7 +886,9 @@ function showQRItem(item) {
   ov.style.zIndex = '600';
   ov.innerHTML = `
     <div class="modal" style="padding:28px 24px">
-      <div id="mqr" style="display:flex;justify-content:center;margin-bottom:12px"></div>
+      <div style="display:flex;justify-content:center;margin-bottom:12px">
+        <canvas id="mqr" style="border-radius: 6px;"></canvas>
+      </div>
       <div style="font-family:var(--mono);font-size:15px;font-weight:700;color:var(--accent)">${item.bmp}</div>
       <div style="font-size:13px;color:var(--text-2);margin-top:4px">${item.desc}</div>
       <div style="font-size:11px;color:var(--text-3);margin-top:2px">Classe ${item.classe}</div>
@@ -895,13 +902,26 @@ function showQRItem(item) {
     </div>`;
   document.body.appendChild(ov);
   qrModal = ov;
-  new QRCode(document.getElementById('mqr'), {
-  text: unescape(encodeURIComponent(`CLASSE:${item.classe}|BMP:${item.bmp}|DESC:${item.desc}`)),
-    width: 160, height: 160,
-    colorDark: '#1A1A18', colorLight: '#ffffff',
-    correctLevel: QRCode.CorrectLevel.H
+  
+  // Renderiza o QRious no modal
+  new QRious({
+    element: document.getElementById('mqr'),
+    value: `CLASSE:${item.classe}|BMP:${item.bmp}|DESC:${item.desc}`,
+    size: 160,
+    level: 'H'
   });
+
   ov.addEventListener('click', e => { if (e.target === ov) ov.remove(); });
+}
+
+function gerarPDF() {
+  const canvas = document.getElementById('qr-render');
+  if (!canvas) return;
+  const a = document.createElement('a');
+  a.href = canvas.toDataURL('image/png');
+  a.download = `QR_${lastQR.bmp}.png`;
+  a.click();
+  toast('Imagem salva.', 'ok');
 }
 
 function imprimirItem(item) {
