@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Controle Patrimonial — Setor</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -780,8 +780,8 @@ function buildPrintArea(items) {
     wrap.className = 'print-label';
     const qDiv = document.createElement('div');
     qDiv.style.flexShrink = '0';
-    new QRCode(qDiv, {
-      text: `CLASSE:${item.classe}|BMP:${item.bmp}|DESC:${item.desc}`,
+   new QRCode(qDiv, {
+  text: unescape(encodeURIComponent(`CLASSE:${item.classe}|BMP:${item.bmp}|DESC:${item.desc}`)),
       width: 80, height: 80,
       colorDark: '#000000', colorLight: '#ffffff',
       correctLevel: QRCode.CorrectLevel.H
@@ -896,7 +896,7 @@ function showQRItem(item) {
   document.body.appendChild(ov);
   qrModal = ov;
   new QRCode(document.getElementById('mqr'), {
-    text: `CLASSE:${item.classe}|BMP:${item.bmp}|DESC:${item.desc}`,
+  text: unescape(encodeURIComponent(`CLASSE:${item.classe}|BMP:${item.bmp}|DESC:${item.desc}`)),
     width: 160, height: 160,
     colorDark: '#1A1A18', colorLight: '#ffffff',
     correctLevel: QRCode.CorrectLevel.H
